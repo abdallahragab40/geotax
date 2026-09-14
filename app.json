@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "GeoTax",
+    "slug": "tax-survey-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "taxsurvey",
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "يستخدم التطبيق موقعك لتسجيل إحداثيات النشاط أثناء المعاينة.",
+        "NSCameraUsageDescription": "يستخدم التطبيق الكاميرا لالتقاط صور النشاط أثناء المعاينة.",
+        "NSPhotoLibraryUsageDescription": "يستخدم التطبيق مكتبة الصور لإرفاق صور النشاط."
+      }
+    },
+    "android": {
+      "package": "com.taxofficer.surveyapp",
+      "adaptiveIcon": {
+        "backgroundColor": "#0E7C66",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-status-bar",
+      "expo-font",
+      "expo-sqlite",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "يستخدم التطبيق موقعك لتسجيل إحداثيات النشاط أثناء المعاينة."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "يستخدم التطبيق مكتبة الصور لإرفاق صور النشاط.",
+          "cameraPermission": "يستخدم التطبيق الكاميرا لالتقاط صور النشاط أثناء المعاينة."
+        }
+      ]
+    ],
+    "extra": {
+      "supabaseUrl": "",
+      "supabaseAnonKey": "",
+      "eas": {
+        "projectId": "8900c043-a5d3-407d-bc04-b3d7cbe8d37b"
+      }
+    },
+    "owner": "abdallahragab"
+  }
+}
