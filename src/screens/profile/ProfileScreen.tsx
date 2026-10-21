@@ -48,11 +48,11 @@ export default function ProfileScreen() {
   }
 
   async function changePassword() {
-    if (pwd1.length < 6) return Alert.alert("كلمة مرور قصيرة", "6 أحرف على الأقل.");
+    if (pwd1.length < 8) return Alert.alert("كلمة مرور قصيرة", "8 أحرف على الأقل.");
     if (pwd1 !== pwd2) return Alert.alert("غير متطابقة", "تأكيد كلمة المرور غير صحيح.");
     setSavingPwd(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password: pwd1 });
+      const { error } = await supabase.rpc("change_my_password", { new_password: pwd1 });
       if (error) throw error;
       setPwd1(""); setPwd2("");
       Alert.alert("تم", "تم تغيير كلمة المرور.");

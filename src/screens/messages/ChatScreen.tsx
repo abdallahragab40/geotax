@@ -16,7 +16,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { supabase } from "../../lib/supabase";
 import { getMessagesWith, sendMessage, markRead } from "../../data/api";
-import { sendPush } from "../../data/notifications";
 import { useAuth } from "../../context/AuthContext";
 import { Message } from "../../types";
 import { colors, radius, spacing } from "../../theme";
@@ -89,7 +88,6 @@ export default function ChatScreen() {
     try {
       const msg = await sendMessage(otherId, body);
       setMessages((prev) => (prev.some((x) => x.id === msg.id) ? prev : [...prev, msg]));
-      sendPush(otherId, profile?.full_name || "رسالة جديدة", body);
     } catch (e: any) {
       setText(body); // إعادة النص عند الفشل
       Alert.alert("تعذّر إرسال الرسالة", e?.message ?? "تحقق من الاتصال وحاول مجددًا.");

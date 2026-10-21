@@ -21,6 +21,7 @@ const KIND_ICON: Record<string, string> = {
   attendance: "person",
   file_approved: "checkmark-circle",
   file_rejected: "close-circle",
+  password_reset: "key",
   general: "information-circle",
 };
 const KIND_COLOR: Record<string, string> = {
@@ -31,8 +32,21 @@ const KIND_COLOR: Record<string, string> = {
   attendance: "#0891B2",
   file_approved: "#0E7C66",
   file_rejected: "#DC2626",
+  password_reset: "#B45309",
   general: "#64748B",
 };
+
+// الشاشة المرتبطة بكل نوع إشعار (تُفتح فقط إن كانت متاحة لدور المستخدم)
+function targetFor(n: Notification): [string, object | undefined] | null {
+  switch (n.link_type) {
+    case "message": return ["Conversations", undefined];
+    case "task": return n.link_id ? ["TaskDetail", { id: n.link_id }] : ["MyTasks", undefined];
+    case "request": return ["RequestDetail", { id: n.link_id }];
+    case "password_reset": return ["PasswordResets", undefined];
+    case "taxpayer": return ["TaxpayerMyFile", undefined];
+    default: return null;
+  }
+}
 
 export default function NotificationsScreen() {
   const navigation = useNavigation<any>();
@@ -51,6 +65,11 @@ export default function NotificationsScreen() {
   async function tap(n: Notification) {
     if (!n.read) await markNotificationRead(n.id);
     setItems((prev) => prev.map((x) => x.id === n.id ? { ...x, read: true } : x));
+    let target = targetFor(n);
+    const routes: string[] = navigation.getState()?.routeNames ?? [];
+    // الممول يتابع طلباته من قائمة طلباته
+    if (target?.[0] === "RequestDetail" && !routes.includes("RequestDetail")) target = ["TaxpayerRequests", undefined];
+    if (target && routes.includes(target[0])) navigation.navigate(target[0], target[1]);
   }
 
   async function markAll() {

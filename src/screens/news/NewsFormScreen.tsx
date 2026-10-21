@@ -26,11 +26,14 @@ export default function NewsFormScreen() {
   const route = useRoute<R>();
   const { profile } = useAuth();
   const editId = route.params?.id;
+  const isAdmin = profile?.role === "admin";
+  // النشر للجميع للإدارة العليا فقط؛ رئيس المأمورية ومدير الحاسب داخل مأموريتهم
+  const audiences = isAdmin ? AUDIENCES.filter((a) => a.key !== "office") : AUDIENCES.filter((a) => a.key !== "all");
   const isEdit = typeof editId === "number";
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [audience, setAudience] = useState<"all" | "office" | "role">("all");
+  const [audience, setAudience] = useState<"all" | "office" | "role">(isAdmin ? "all" : "office");
   const [targetRole, setTargetRole] = useState<string>("surveyor");
   const [saving, setSaving] = useState(false);
 
@@ -60,7 +63,7 @@ export default function NewsFormScreen() {
         title: title.trim(),
         content: content.trim(),
         audience,
-        office_id: audience === "office" ? profile?.office_id ?? null : null,
+        office_id: isAdmin ? null : profile?.office_id ?? null,
         target_role: audience === "role" ? targetRole : null,
       };
       if (isEdit) await updateNews(editId!, payload);
@@ -79,7 +82,7 @@ export default function NewsFormScreen() {
 
         <Text style={styles.label}>الفئة المستهدفة</Text>
         <View style={styles.chips}>
-          {AUDIENCES.map((a) => {
+          {audiences.map((a) => {
             const active = audience === a.key;
             return (
               <TouchableOpacity key={a.key} style={[styles.chip, active && styles.chipActive]} onPress={() => setAudience(a.key as any)}>

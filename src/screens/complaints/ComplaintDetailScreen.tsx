@@ -1,6 +1,6 @@
 // تفاصيل الشكوى ومعالجتها (للموظف)
 import React, { useCallback, useLayoutEffect, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Image } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation, useRoute, RouteProp } from "@react-navigation/native";
@@ -12,6 +12,7 @@ import LeafletMap from "../../components/LeafletMap";
 import { openDirections } from "../../data/directions";
 import { colors, radius, spacing, shadow } from "../../theme";
 import { formatDateTime, formatCoords } from "../../utils";
+import SecureImage from "../../components/SecureImage";
 
 type R = RouteProp<{ params: { id: number } }, "params">;
 
@@ -83,7 +84,7 @@ export default function ComplaintDetailScreen() {
             <Text style={styles.section}>الصور المرفقة ({c.photos!.length})</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {c.photos!.map((url) => (
-                <Image key={url} source={{ uri: url }} style={styles.photo} />
+                <SecureImage key={url} uri={url} style={styles.photo} />
               ))}
             </ScrollView>
           </>

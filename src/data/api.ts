@@ -1,6 +1,7 @@
 // طبقة الوصول للبيانات عبر Supabase
 import { supabase } from "../lib/supabase";
 import { Conversation, DeptRecord, Message, Profile } from "../types";
+import { cleanSearch } from "../utils";
 
 // ===== سجلات الإدارات (عامة لأي جدول) =====
 
@@ -10,7 +11,7 @@ export async function listRecords(
 ): Promise<DeptRecord[]> {
   let query = supabase.from(table).select("*").order("created_at", { ascending: false });
   if (search && search.trim()) {
-    const q = `%${search.trim()}%`;
+    const q = `%${cleanSearch(search)}%`;
     query = query.or(`tax_number.ilike.${q},name.ilike.${q}`);
   }
   const { data, error } = await query;
@@ -124,23 +125,32 @@ export async function markRead(fromId: string): Promise<void> {
 }
 
 // بناء قائمة محادثات من قائمة أطراف معطاة (آخر رسالة + عدد غير المقروء)
+// الملخص يُحسب على الخادم (my_conversation_summaries) بدل تحميل كل الرسائل
 export async function buildConversations(
   myId: string,
   others: Profile[]
 ): Promise<Conversation[]> {
-  const { data: msgs } = await supabase
-    .from("messages")
-    .select("*")
-    .order("created_at", { ascending: false });
-  const messages = (msgs as Message[]) ?? [];
+  const { data, error } = await supabase.rpc("my_conversation_summaries");
+  if (error) throw error;
+  const byOther = new Map<string, { last_body: string; last_at: string; last_sender: string; unread: number }>();
+  for (const row of (data as any[]) ?? []) byOther.set(row.other_id, row);
 
   return others
     .filter((p) => p.id !== myId)
     .map((p) => {
-      const conv = messages.filter((m) => m.sender_id === p.id || m.receiver_id === p.id);
-      const unread = conv.filter((m) => m.receiver_id === myId && !m.read).length;
-      return { profile: p, lastMessage: conv[0], unread };
-    });
+      const s = byOther.get(p.id);
+      const lastMessage = s
+        ? ({
+            body: s.last_body,
+            created_at: s.last_at,
+            sender_id: s.last_sender,
+            receiver_id: s.last_sender === myId ? p.id : myId,
+          } as Message)
+        : undefined;
+      return { profile: p, lastMessage, unread: s?.unread ?? 0 };
+    })
+    // المحادثات النشطة أولًا (الأحدث فالأقدم) ثم بقية جهات الاتصال
+    .sort((a, b) => (b.lastMessage?.created_at ?? "").localeCompare(a.lastMessage?.created_at ?? ""));
 }
 
 // محادثات الموظف: الممولون + الزملاء (موظفون ومدير)

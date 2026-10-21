@@ -1,9 +1,10 @@
 // اختيار/التقاط الصور وعرض مصغّراتها
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, Alert } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { colors, radius, spacing } from "../theme";
+import SecureImage from "./SecureImage";
 
 // الصور المعروضة: روابط محفوظة (سحابية) + صور جديدة محلية
 export default function PhotoPicker({
@@ -69,7 +70,7 @@ export default function PhotoPicker({
 function Thumb({ uri, onRemove }: { uri: string; onRemove: () => void }) {
   return (
     <View style={styles.thumb}>
-      <Image source={{ uri }} style={styles.img} />
+      <SecureImage uri={uri} style={styles.img} />
       <TouchableOpacity style={styles.remove} onPress={onRemove}>
         <Ionicons name="close" size={14} color={colors.white} />
       </TouchableOpacity>

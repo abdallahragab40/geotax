@@ -8,7 +8,6 @@ import {
   StyleSheet,
   TextInput,
   Alert,
-  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,21 +17,26 @@ import PhotoPicker from "../../components/PhotoPicker";
 import {
   getTaxpayerFile,
   updateTaxpayerFile,
-  deleteTaxpayerFile,
   listModifications,
 } from "../../data/registry";
+import { assignTaxNumber } from "../../data/notifications_api";
+import { headDeleteTaxpayer } from "../../data/news";
+import { useAuth } from "../../context/AuthContext";
 import { uploadPhotos } from "../../data/storage";
 import { openDirections } from "../../data/directions";
 import { Taxpayer, TaxpayerModification } from "../../types";
 import { colors, radius, spacing, shadow } from "../../theme";
 import { formatDateTime, formatCoords } from "../../utils";
+import SecureImage from "../../components/SecureImage";
 
 type R = RouteProp<{ params: { id: number } }, "params">;
 
 export default function TaxpayerFileScreen() {
   const route = useRoute<R>();
   const navigation = useNavigation<any>();
+  const { profile } = useAuth();
   const id = route.params.id;
+  const canDelete = profile?.role === "office_head" || profile?.role === "admin";
 
   const [tp, setTp] = useState<Taxpayer | null>(null);
   const [mods, setMods] = useState<TaxpayerModification[]>([]);
@@ -56,10 +60,17 @@ export default function TaxpayerFileScreen() {
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   async function saveLocation() {
-    if (!coords) return;
-    await updateTaxpayerFile(id, { latitude: coords.lat, longitude: coords.lng });
-    Alert.alert("تم", "تم حفظ الموقع الجغرافي.");
-    load();
+    if (!coords) {
+      Alert.alert("لا يوجد موقع", "التقط الموقع أولًا.");
+      return;
+    }
+    try {
+      await updateTaxpayerFile(id, { latitude: coords.lat, longitude: coords.lng });
+      Alert.alert("تم", "تم حفظ الموقع الجغرافي.");
+      load();
+    } catch (e: any) {
+      Alert.alert("خطأ", e?.message ?? "تعذّر حفظ الموقع.");
+    }
   }
 
   async function savePhotos() {
@@ -80,16 +91,32 @@ export default function TaxpayerFileScreen() {
       Alert.alert("مطلوب", "أدخل الرقم الضريبي.");
       return;
     }
-    await updateTaxpayerFile(id, { tax_number: taxInput.trim(), status: "مسجل" });
-    setTaxInput("");
-    Alert.alert("تم", "تم استكمال التسجيل ودمج الممول بالنظام.");
-    load();
+    try {
+      // عبر RPC: يتحقق من عدم التكرار، يربط حساب الممول، ويرسل له إشعار الاعتماد
+      await assignTaxNumber(id, taxInput.trim());
+      setTaxInput("");
+      Alert.alert("تم", "تم استكمال التسجيل ودمج الممول بالنظام.");
+      load();
+    } catch (e: any) {
+      Alert.alert("تعذّر الاعتماد", e?.message ?? "حاول مجددًا.");
+    }
   }
 
   function confirmDelete() {
-    Alert.alert("حذف الملف", "حذف ملف الممول نهائيًا؟", [
+    Alert.alert("حذف الملف", "حذف ملف الممول نهائيًا؟ سيُسجَّل الحذف في سجل الملفات المحذوفة.", [
       { text: "إلغاء", style: "cancel" },
-      { text: "حذف", style: "destructive", onPress: async () => { await deleteTaxpayerFile(id); navigation.goBack(); } },
+      {
+        text: "حذف",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await headDeleteTaxpayer(id, "حذف من شاشة ملف الممول");
+            navigation.goBack();
+          } catch (e: any) {
+            Alert.alert("تعذّر الحذف", e?.message ?? "حاول مجددًا.");
+          }
+        },
+      },
     ]);
   }
 
@@ -152,7 +179,7 @@ export default function TaxpayerFileScreen() {
         {(tp.photos?.length ?? 0) > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: spacing.sm }}>
             {tp.photos!.map((url) => (
-              <Image key={url} source={{ uri: url }} style={styles.photo} />
+              <SecureImage key={url} uri={url} style={styles.photo} />
             ))}
           </ScrollView>
         )}
@@ -194,10 +221,12 @@ export default function TaxpayerFileScreen() {
           ))
         )}
 
-        <TouchableOpacity style={styles.deleteBtn} onPress={confirmDelete}>
-          <Ionicons name="trash-outline" size={18} color={colors.danger} />
-          <Text style={styles.deleteText}>حذف الملف</Text>
-        </TouchableOpacity>
+        {canDelete && (
+          <TouchableOpacity style={styles.deleteBtn} onPress={confirmDelete}>
+            <Ionicons name="trash-outline" size={18} color={colors.danger} />
+            <Text style={styles.deleteText}>حذف الملف</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

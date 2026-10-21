@@ -13,8 +13,17 @@
 ## 2) تشغيل مخطط قاعدة البيانات
 
 1. من القائمة الجانبية: **SQL Editor** → **New query**.
-2. افتح ملف [supabase/schema.sql](supabase/schema.sql) من المشروع، انسخ كل محتواه والصقه.
-3. اضغط **Run**. يجب أن تظهر "Success".
+2. شغّل الملفات التالية من مجلد `supabase/` **بهذا الترتيب** (انسخ محتوى كل ملف ← **Run**):
+   1. `schema.sql`
+   2. `phase1_roles.sql` → `phase2_taxpayers.sql` → `phase345.sql` → `phase6.sql`
+   3. `phase7_offices.sql` → `phase8_admin.sql` → `phase9_survey.sql` → `phase10_exam.sql`
+   4. `phase11_taxpayer.sql` → `phase12_audit.sql` → `phase13_v2_complete.sql` → `seed_taxpayers_v2.sql`
+   5. `change_password_rpc.sql`
+   6. **`phase14_security_hardening.sql`** (إلزامي قبل النشر — يغلق ثغرات الصلاحيات)
+   7. **`phase15_features.sql`** (استعادة كلمة المرور، إشعارات الهاتف، حماية الشكاوى، التخزين الخاص)
+   8. **`rotate_default_passwords.sql`** (إلزامي قبل النشر — احفظ نتيجته وسلّم كلمات المرور لأصحابها بشكل سري)
+   9. `seed_review_accounts.sql` (حسابات مراجعي المتجر — انظر [STORE_RELEASE.md](STORE_RELEASE.md))
+3. يجب أن تظهر "Success" بعد كل ملف.
 
 ## 3) الحصول على مفاتيح Supabase
 

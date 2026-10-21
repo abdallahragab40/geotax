@@ -48,6 +48,14 @@ export default function ComplaintFormScreen({ navigation }: Props) {
       Alert.alert("بيانات ناقصة", "أدخل الاسم والرقم القومي ورقم الهاتف.");
       return;
     }
+    if (!/^\d{14}$/.test(nationalId.trim())) {
+      Alert.alert("رقم قومي غير صحيح", "الرقم القومي يتكون من 14 رقمًا.");
+      return;
+    }
+    if (!/^01\d{9}$/.test(phone.trim())) {
+      Alert.alert("رقم هاتف غير صحيح", "أدخل رقم هاتف محمول مصري من 11 رقمًا يبدأ بـ 01.");
+      return;
+    }
     if (!accused.trim()) {
       Alert.alert("بيانات ناقصة", "أدخل اسم المشكو في حقه.");
       return;

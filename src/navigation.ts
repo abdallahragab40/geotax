@@ -54,6 +54,7 @@ export type InternalStackParamList = {
   Notifications: undefined;
   TaxpayerMyFile: undefined;
   AuditLog: undefined;
+  PasswordResets: undefined;
   Map: undefined;
   Conversations: undefined;
   Chat: { otherId: string; name: string };

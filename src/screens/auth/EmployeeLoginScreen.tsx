@@ -59,7 +59,7 @@ export default function EmployeeLoginScreen({ navigation }: Props) {
           <Ionicons name="arrow-forward" size={24} color={colors.text} />
         </TouchableOpacity>
 
-        <Ionicons name="shield-checkmark" size={48} color={colors.primary} />
+        <Ionicons name="shield-checkmark" size={48} color={colors.primary} style={styles.icon} />
         <Text style={styles.title}>دخول الموظف</Text>
 
         <Text style={styles.label}>المأمورية</Text>
@@ -81,7 +81,7 @@ export default function EmployeeLoginScreen({ navigation }: Props) {
         />
         <TextInput
           style={styles.input}
-          placeholder="كلمة المرور (الافتراضي: 12345)"
+          placeholder="كلمة المرور"
           placeholderTextColor={colors.muted}
           value={password}
           onChangeText={setPassword}
@@ -92,7 +92,10 @@ export default function EmployeeLoginScreen({ navigation }: Props) {
           {loading ? <ActivityIndicator color={colors.white} /> : <Text style={styles.btnText}>دخول</Text>}
         </TouchableOpacity>
 
-        <Text style={styles.hint}>عند الدخول لأول مرة سيُطلب منك تغيير كلمة المرور.</Text>
+        <Text style={styles.hint}>
+          عند الدخول لأول مرة سيُطلب منك تغيير كلمة المرور.{"\n"}
+          نسيت كلمة المرور؟ تواصل مع مدير الحاسب الآلي بمأموريتك لإعادة تعيينها.
+        </Text>
       </ScrollView>
 
       <Modal visible={pickerOpen} transparent animationType="slide" onRequestClose={() => setPickerOpen(false)}>
@@ -128,6 +131,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   inner: { padding: spacing.xl, alignItems: "stretch", paddingTop: spacing.xl * 2.5 },
   back: { position: "absolute", top: spacing.lg, right: spacing.lg, zIndex: 10 },
+  icon: { alignSelf: "center" },
   title: { fontSize: 24, fontWeight: "800", color: colors.text, marginVertical: spacing.lg, textAlign: "center" },
   label: { fontSize: 14, fontWeight: "700", color: colors.text, textAlign: "right", marginBottom: spacing.xs },
   picker: {

@@ -1,6 +1,6 @@
 // شاشة اختيار نوع المستخدم: موظف أو ممول
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -13,9 +13,7 @@ export default function RoleSelectScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.logo}>
-          <Ionicons name="business" size={40} color={colors.white} />
-        </View>
+        <Image source={require("../../../assets/icon.png")} style={styles.logo} />
         <Text style={styles.title}>GeoTax</Text>
         <Text style={styles.subtitle}>منظومة المعاينات والربط الجغرافي الضريبي</Text>
       </View>
@@ -28,7 +26,7 @@ export default function RoleSelectScreen({ navigation }: Props) {
         <Ionicons name="shield-checkmark" size={32} color={colors.primary} />
         <View style={styles.cardText}>
           <Text style={styles.cardTitle}>موظف</Text>
-          <Text style={styles.cardDesc}>دخول بالبريد وكلمة المرور — صلاحيات كاملة</Text>
+          <Text style={styles.cardDesc}>دخول برقم الحاسب وكلمة المرور</Text>
         </View>
         <Ionicons name="chevron-back" size={22} color={colors.muted} />
       </TouchableOpacity>
@@ -41,7 +39,7 @@ export default function RoleSelectScreen({ navigation }: Props) {
         <Ionicons name="person" size={32} color={colors.accent} />
         <View style={styles.cardText}>
           <Text style={styles.cardTitle}>ممول</Text>
-          <Text style={styles.cardDesc}>دخول بالرقم القومي ورقم الهاتف — عرض ملفك</Text>
+          <Text style={styles.cardDesc}>دخول برقم التسجيل الضريبي — ملفك وطلباتك</Text>
         </View>
         <Ionicons name="chevron-back" size={22} color={colors.muted} />
       </TouchableOpacity>
@@ -69,10 +67,6 @@ const styles = StyleSheet.create({
     width: 84,
     height: 84,
     borderRadius: radius.lg,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    ...shadow,
   },
   title: { fontSize: 26, fontWeight: "800", color: colors.text, marginTop: spacing.lg },
   subtitle: { fontSize: 15, color: colors.muted, marginTop: spacing.xs },

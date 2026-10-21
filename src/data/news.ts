@@ -64,6 +64,54 @@ export async function requestPasswordReset(targetId: string): Promise<void> {
   if (error) throw error;
 }
 
+// إعادة تعيين كلمة مرور موظف (ضمن الهرم الإداري) — يُجبر على تغييرها عند الدخول
+export async function resetUserPassword(targetId: string, newPassword: string): Promise<void> {
+  const { error } = await supabase.rpc("admin_reset_password", { target: targetId, new_password: newPassword });
+  if (error) throw error;
+}
+
+// ===== استعادة كلمة مرور الممول =====
+
+export interface PasswordResetRequest {
+  id: number;
+  user_id: string;
+  office_id: number | null;
+  full_name: string;
+  national_id: string;
+  phone: string;
+  tax_number: string | null;
+  status: "new" | "done" | "rejected";
+  created_at: string;
+}
+
+// من شاشة الدخول (بدون حساب): لا يكشف إن كانت البيانات صحيحة
+export async function submitForgotPassword(nationalId: string, phone: string): Promise<void> {
+  const { error } = await supabase.rpc("request_password_reset", {
+    p_national: nationalId.trim(),
+    p_phone: phone.trim(),
+  });
+  if (error) throw error;
+}
+
+export async function listPasswordResetRequests(): Promise<PasswordResetRequest[]> {
+  const { data, error } = await supabase
+    .from("password_reset_requests")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  return (data as PasswordResetRequest[]) ?? [];
+}
+
+export async function resolvePasswordReset(id: number, newPassword: string | null, reject = false): Promise<void> {
+  const { error } = await supabase.rpc("resolve_password_reset", {
+    p_request: id,
+    p_new_password: newPassword,
+    p_reject: reject,
+  });
+  if (error) throw error;
+}
+
 export async function updateOwnProfile(values: Partial<Profile>): Promise<void> {
   const { data: u } = await supabase.auth.getUser();
   const { error } = await supabase.from("profiles").update(values).eq("id", u.user?.id ?? "");

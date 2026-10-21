@@ -8,6 +8,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getOffice } from "../../data/offices";
 import { Office } from "../../types";
 import { colors, radius, spacing, shadow } from "../../theme";
+import NotificationBell from "../../components/NotificationBell";
 
 export default function OfficeHeadHomeScreen() {
   const navigation = useNavigation<any>();
@@ -26,9 +27,12 @@ export default function OfficeHeadHomeScreen() {
           <Text style={styles.name}>{profile?.full_name || "—"}</Text>
           {office && <Text style={styles.office}>{office.name} — {office.governorate}</Text>}
         </View>
-        <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
-          <Ionicons name="person-circle" size={40} color={colors.primary} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
+            <Ionicons name="person-circle" size={40} color={colors.primary} />
+          </TouchableOpacity>
+          <NotificationBell />
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.grid}>
@@ -40,6 +44,7 @@ export default function OfficeHeadHomeScreen() {
         <Tile icon="chatbubbles" color="#0D9488" title="المراسلات" onPress={() => navigation.navigate("Conversations")} />
         <Tile icon="alert-circle" color="#DB2777" title="الشكاوى" onPress={() => navigation.navigate("ComplaintsList")} />
         <Tile icon="document-text" color="#475569" title="سجل العمليات" onPress={() => navigation.navigate("AuditLog")} />
+        <Tile icon="key" color="#B45309" title="استعادة كلمات المرور" onPress={() => navigation.navigate("PasswordResets")} />
         <Tile icon="person" color="#D97706" title="الملف الشخصي" onPress={() => navigation.navigate("Profile")} />
       </ScrollView>
     </SafeAreaView>

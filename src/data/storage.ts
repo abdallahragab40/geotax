@@ -31,3 +31,25 @@ export async function uploadPhotos(localUris: string[]): Promise<string[]> {
   }
   return urls;
 }
+
+// ===== عرض الصور من المساحة الخاصة =====
+// الروابط المحفوظة بالسجلات بصيغة الرابط العام؛ بعد جعل المساحة خاصة
+// نستخرج مسار الملف ونطلب رابطًا موقّعًا مؤقتًا (يُخزَّن مؤقتًا لتقليل الطلبات)
+const SIGNED_TTL = 60 * 60; // ثانية
+const signedCache = new Map<string, { url: string; expires: number }>();
+
+export function storagePathFromUrl(url: string): string | null {
+  const m = url.match(/\/storage\/v1\/object\/(?:public|sign|authenticated)\/attachments\/([^?]+)/);
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
+export async function resolvePhotoUrl(url: string): Promise<string> {
+  const path = storagePathFromUrl(url);
+  if (!path) return url; // صورة محلية أو رابط خارجي
+  const cached = signedCache.get(path);
+  if (cached && cached.expires > Date.now()) return cached.url;
+  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(path, SIGNED_TTL);
+  if (error || !data?.signedUrl) return url;
+  signedCache.set(path, { url: data.signedUrl, expires: Date.now() + (SIGNED_TTL - 60) * 1000 });
+  return data.signedUrl;
+}

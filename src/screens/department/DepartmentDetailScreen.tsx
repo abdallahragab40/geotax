@@ -1,6 +1,6 @@
 // تفاصيل سجل (عام) — يُستخدم للموظف (مع تعديل/حذف) وللممول (قراءة فقط)
 import React, { useCallback, useLayoutEffect, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, Alert } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useNavigation, useRoute, RouteProp } from "@react-navigation/native";
@@ -11,6 +11,7 @@ import { DeptRecord } from "../../types";
 import { colors, radius, spacing, shadow } from "../../theme";
 import { formatDateTime, formatCoords } from "../../utils";
 import LeafletMap from "../../components/LeafletMap";
+import SecureImage from "../../components/SecureImage";
 
 type DetailRoute = RouteProp<{ params: { deptKey: string; id: number } }, "params">;
 
@@ -86,7 +87,7 @@ export default function DepartmentDetailScreen() {
             <Text style={styles.section}>الصور ({rec.photos!.length})</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {rec.photos!.map((url) => (
-                <Image key={url} source={{ uri: url }} style={styles.photo} />
+                <SecureImage key={url} uri={url} style={styles.photo} />
               ))}
             </ScrollView>
           </>

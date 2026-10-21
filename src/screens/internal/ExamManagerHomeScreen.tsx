@@ -8,6 +8,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getOffice } from "../../data/offices";
 import { Office } from "../../types";
 import { colors, radius, spacing, shadow } from "../../theme";
+import NotificationBell from "../../components/NotificationBell";
 
 export default function ExamManagerHomeScreen() {
   const navigation = useNavigation<any>();
@@ -26,9 +27,12 @@ export default function ExamManagerHomeScreen() {
           <Text style={styles.name}>{profile?.full_name || "—"}</Text>
           {office && <Text style={styles.office}>{office.name}</Text>}
         </View>
-        <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
-          <Ionicons name="person-circle" size={40} color={colors.primary} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
+            <Ionicons name="person-circle" size={40} color={colors.primary} />
+          </TouchableOpacity>
+          <NotificationBell />
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.grid}>

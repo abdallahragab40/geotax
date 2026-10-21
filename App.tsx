@@ -67,6 +67,7 @@ import ExamPlansScreen from "./src/screens/exam/ExamPlansScreen";
 import NotificationsScreen from "./src/screens/notifications/NotificationsScreen";
 import TaxpayerMyFileScreen from "./src/screens/taxpayer/TaxpayerMyFileScreen";
 import AuditLogScreen from "./src/screens/audit/AuditLogScreen";
+import PasswordResetsScreen from "./src/screens/admin/PasswordResetsScreen";
 import MapScreen from "./src/screens/MapScreen";
 import ConversationsScreen from "./src/screens/messages/ConversationsScreen";
 import ChatScreen from "./src/screens/messages/ChatScreen";
@@ -142,6 +143,7 @@ function InternalNavigator() {
       <InternalStack.Screen name="Notifications" component={NotificationsScreen} options={{ title: "الإشعارات" }} />
       <InternalStack.Screen name="TaxpayerMyFile" component={TaxpayerMyFileScreen} options={{ title: "ملف الممول" }} />
       <InternalStack.Screen name="AuditLog" component={AuditLogScreen} options={{ title: "سجل العمليات" }} />
+      <InternalStack.Screen name="PasswordResets" component={PasswordResetsScreen} options={{ title: "استعادة كلمات المرور" }} />
       <InternalStack.Screen name="Map" component={MapScreen} options={{ title: "الخريطة" }} />
       <InternalStack.Screen name="Conversations" component={ConversationsScreen} options={{ title: "المراسلات" }} />
       <InternalStack.Screen name="Chat" component={ChatScreen} options={{ title: "محادثة" }} />
@@ -172,9 +174,21 @@ function IncompleteAccount() {
     <View style={styles.center}>
       <Text style={styles.error}>
         حسابك غير مكتمل التهيئة (لا يوجد ملف مرتبط به).{"\n"}
-        راجع SETUP.md لتعيين دورك، أو سجّل دخولًا صحيحًا.
+        تواصل مع مدير الحاسب الآلي بمأموريتك، أو سجّل الدخول بحساب آخر.
       </Text>
       <Text selectable style={styles.uid}>معرّف الحساب:{"\n"}{session?.user?.id}</Text>
+      <Text style={styles.link} onPress={() => signOut()}>تسجيل الخروج</Text>
+    </View>
+  );
+}
+
+function SuspendedAccount() {
+  const { signOut } = useAuth();
+  return (
+    <View style={styles.center}>
+      <Text style={styles.error}>
+        تم إيقاف حسابك.{"\n"}تواصل مع مدير الحاسب الآلي بمأموريتك لإعادة تفعيله.
+      </Text>
       <Text style={styles.link} onPress={() => signOut()}>تسجيل الخروج</Text>
     </View>
   );
@@ -203,6 +217,8 @@ function Root() {
         <AuthNavigator />
       ) : !profile ? (
         <IncompleteAccount />
+      ) : profile.status === "suspended" ? (
+        <SuspendedAccount />
       ) : profile.must_change_password ? (
         <ChangePasswordScreen />
       ) : profile.role === "taxpayer" ? (
@@ -221,7 +237,7 @@ export default function App() {
     return (
       <View style={styles.center}>
         <Text style={styles.error}>
-          لم يتم ضبط إعدادات Supabase.{"\n"}راجع ملف SETUP.md واملأ ملف .env.
+          تعذّر تشغيل التطبيق: إعدادات الاتصال بالخادم غير مكتملة.{"\n"}يرجى تحديث التطبيق أو التواصل مع الدعم الفني.
         </Text>
       </View>
     );

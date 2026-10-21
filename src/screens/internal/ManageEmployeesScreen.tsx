@@ -12,11 +12,20 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { listStaff } from "../../data/api";
 import { listOffices } from "../../data/offices";
+import { resetUserPassword, setUserStatus } from "../../data/news";
 import { useAuth } from "../../context/AuthContext";
 import { Profile, Role, ROLE_LABELS, Office } from "../../types";
 import { colors, radius, spacing, shadow } from "../../theme";
 
 type RoleOpt = { role: Role; label: string };
+
+// كلمة مرور مؤقتة عشوائية (يُجبر الموظف على تغييرها عند أول دخول)
+function tempPassword(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  let out = "";
+  for (let i = 0; i < 10; i++) out += chars[Math.floor(Math.random() * chars.length)];
+  return out;
+}
 
 const ROLES_BY_CALLER: Record<string, RoleOpt[]> = {
   admin: [{ role: "office_head", label: "رئيس مأمورية" }],
@@ -65,7 +74,7 @@ export default function ManageEmployeesScreen() {
 
   const [fullName, setFullName] = useState("");
   const [empNumber, setEmpNumber] = useState("");
-  const [password, setPassword] = useState("12345678");
+  const [password, setPassword] = useState(tempPassword);
   const [role, setRole] = useState<Role>((assignable[0]?.role ?? "surveyor") as Role);
   const [selectedOffice, setSelectedOffice] = useState<Office | null>(null);
   const [saving, setSaving] = useState(false);
@@ -113,8 +122,8 @@ export default function ManageEmployeesScreen() {
       Alert.alert("بيانات ناقصة", "اختر المأمورية.");
       return;
     }
-    if (password.length < 6) {
-      Alert.alert("كلمة مرور ضعيفة", "يجب 6 أحرف على الأقل.");
+    if (password.length < 8) {
+      Alert.alert("كلمة مرور ضعيفة", "يجب 8 أحرف على الأقل.");
       return;
     }
     setSaving(true);
@@ -129,10 +138,13 @@ export default function ManageEmployeesScreen() {
         employeeNumber: empNumber.trim(),
       });
       setModal(false);
-      setFullName(""); setEmpNumber(""); setPassword("12345678");
+      setFullName(""); setEmpNumber(""); setPassword(tempPassword());
       setSelectedOffice(null);
       load();
-      Alert.alert("تم", `تم إنشاء الحساب بنجاح.\nالبريد: ${email}\nكلمة المرور: ${password}`);
+      Alert.alert(
+        "تم إنشاء الحساب",
+        `رقم الحاسب: ${empNumber.trim()}\nكلمة المرور المؤقتة: ${password}\n\nسلّمها للموظف — سيُطلب منه تغييرها عند أول دخول.`
+      );
     } catch (e: any) {
       Alert.alert("تعذّر الإنشاء", e?.message ?? "حاول مجددًا.");
     } finally {
@@ -140,8 +152,42 @@ export default function ManageEmployeesScreen() {
     }
   }
 
+  // الإجراءات المتاحة على موظف: إعادة تعيين كلمة المرور + إيقاف/تفعيل
+  // (الصلاحية النهائية يفرضها الخادم عبر can_manage_user)
+  function openActions(item: Profile) {
+    if (item.id === profile?.id || assignable.length === 0) return;
+    const suspended = item.status === "suspended";
+    Alert.alert(item.full_name || "موظف", ROLE_LABELS[item.role] ?? item.role, [
+      {
+        text: "إعادة تعيين كلمة المرور",
+        onPress: async () => {
+          const pwd = tempPassword();
+          try {
+            await resetUserPassword(item.id, pwd);
+            Alert.alert("تمت إعادة التعيين", `كلمة المرور المؤقتة الجديدة:\n${pwd}\n\nسيُطلب من الموظف تغييرها عند الدخول.`);
+          } catch (e: any) {
+            Alert.alert("تعذّر التنفيذ", e?.message ?? "حاول مجددًا.");
+          }
+        },
+      },
+      {
+        text: suspended ? "تفعيل الحساب" : "إيقاف الحساب",
+        style: suspended ? "default" : "destructive",
+        onPress: async () => {
+          try {
+            await setUserStatus(item.id, suspended ? "active" : "suspended");
+            load();
+          } catch (e: any) {
+            Alert.alert("تعذّر التنفيذ", e?.message ?? "حاول مجددًا.");
+          }
+        },
+      },
+      { text: "إلغاء", style: "cancel" },
+    ]);
+  }
+
   const renderItem = ({ item }: { item: Profile }) => (
-    <View style={styles.row}>
+    <TouchableOpacity style={[styles.row, item.status === "suspended" && { opacity: 0.55 }]} activeOpacity={0.8} onPress={() => openActions(item)}>
       <View style={[styles.avatar, { backgroundColor: item.role === "admin" ? "#7C3AED" : colors.primary }]}>
         <Ionicons name={item.role === "admin" ? "shield" : "person"} size={20} color={colors.white} />
       </View>
@@ -150,9 +196,10 @@ export default function ManageEmployeesScreen() {
         <Text style={styles.roleLabel}>
           {ROLE_LABELS[item.role] ?? item.role}
           {item.employee_number ? ` — ${item.employee_number}` : ""}
+          {item.status === "suspended" ? " — موقوف" : ""}
         </Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -212,11 +259,11 @@ export default function ManageEmployeesScreen() {
 
               <TextInput
                 style={styles.input}
-                placeholder="كلمة المرور الافتراضية (6+ أحرف)"
+                placeholder="كلمة المرور المؤقتة (8+ أحرف)"
                 placeholderTextColor={colors.muted}
                 value={password}
                 onChangeText={setPassword}
-                secureTextEntry
+                autoCapitalize="none"
               />
 
               {assignable.length > 1 && (

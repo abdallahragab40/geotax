@@ -10,6 +10,11 @@ export function formatDateTime(iso: string): string {
   return `${date} - ${time}`;
 }
 
+// تنظيف نص البحث قبل وضعه في فلتر or() — الفواصل والأقواس تكسر صيغة الاستعلام
+export function cleanSearch(text: string): string {
+  return text.trim().replace(/[,()*%\\]/g, " ").trim();
+}
+
 // عرض الإحداثيات بشكل مختصر
 export function formatCoords(lat: number | null, lng: number | null): string {
   if (lat == null || lng == null) return "لم يُسجّل موقع";

@@ -10,6 +10,7 @@ import { Session, createClient } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../lib/config";
 import { Profile, Role } from "../types";
+import { unregisterPush } from "../data/notifications";
 
 // بريد وهمي للممول المسجَّل (له رقم ضريبي)
 const taxpayerEmail = (taxNumber: string) =>
@@ -24,13 +25,8 @@ interface AuthState {
   loading: boolean;
   profileLoaded: boolean;
   signInEmployee: (email: string, password: string) => Promise<void>;
-  signUpEmployee: (data: {
-    email: string;
-    password: string;
-    fullName: string;
-    code: string;
-  }) => Promise<void>;
-  signInTaxpayer: (taxNumber: string, password: string) => Promise<void>;
+  // الدخول برقم التسجيل الضريبي، أو بالرقم القومي لمن لم يُعتمد ملفه بعد
+  signInTaxpayer: (identifier: string, password: string) => Promise<void>;
   // ممول موجود بالبيانات: تحقّق واربط (يرفض لو غير موجود)
   signUpExistingTaxpayer: (data: {
     nationalId: string;
@@ -48,6 +44,8 @@ interface AuthState {
     officeId: number;
   }) => Promise<void>;
   signOut: () => Promise<void>;
+  // حذف حساب الممول نهائيًا (متطلب متاجر التطبيقات)
+  deleteAccount: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   adminCreateEmployee: (data: {
     email: string;
@@ -131,58 +129,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
   }, []);
 
-  const signUpEmployee = useCallback(
-    async (d: { email: string; password: string; fullName: string; code: string }) => {
-      const { data, error } = await supabase.auth.signUp({
-        email: d.email.trim(),
-        password: d.password,
-      });
-      if (error) throw error;
-      const userId = data.user?.id;
-      if (!userId) throw new Error("تعذّر إنشاء الحساب");
-      // التحقق من الرمز وتعيين الدور موظف (عبر دالة الخادم)
-      const { error: rpcErr } = await supabase.rpc("register_as_employee", {
-        code: d.code.trim(),
-        full_name: d.fullName.trim(),
-      });
-      if (rpcErr) {
-        // فشل التحقق من الرمز — نخرج لتجنّب حساب بدون دور
-        await supabase.auth.signOut();
-        throw rpcErr;
-      }
-      await loadProfile(userId);
-    },
-    [loadProfile]
-  );
-
   // دخول الممول: رقم تسجيل ضريبي + كلمة سر
-  const signInTaxpayer = useCallback(async (taxNumber: string, password: string) => {
+  // (الممول الجديد الذي لم يُعتمد ملفه بعد يدخل برقمه القومي)
+  const signInTaxpayer = useCallback(async (identifier: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
-      email: taxpayerEmail(taxNumber),
+      email: taxpayerEmail(identifier),
       password: password.trim(),
     });
-    if (error) throw error;
+    if (!error) return;
+    const { error: e2 } = await supabase.auth.signInWithPassword({
+      email: newTaxpayerEmail(identifier),
+      password: password.trim(),
+    });
+    if (e2) throw error;
   }, []);
 
   // ممول مسجَّل مسبقًا بالنظام: ينشئ حسابه ويربطه بسجل taxpayers الموجود
   const signUpExistingTaxpayer = useCallback(
     async (d: { nationalId: string; phone: string; password: string; fullName: string; taxNumber: string }) => {
-      const { data, error } = await supabase.auth.signUp({
-        email: taxpayerEmail(d.taxNumber),
-        password: d.password.trim(),
+      // التحقق قبل إنشاء الحساب حتى لا يُحجز رقم الممول بحساب يتيم
+      const { data: canRegister, error: cErr } = await supabase.rpc("taxpayer_can_register", {
+        p_tax: d.taxNumber.trim(),
+        p_national: d.nationalId.trim(),
       });
-      if (error) throw error;
-      const userId = data.user?.id;
+      if (cErr) throw cErr;
+      if (!canRegister) {
+        throw new Error(
+          "لا يوجد ملف بهذا الرقم الضريبي والرقم القومي، أو أن الملف مرتبط بحساب بالفعل. إن كنت ممولًا جديدًا استخدم «ملف جديد»."
+        );
+      }
+
+      const email = taxpayerEmail(d.taxNumber);
+      let userId: string | undefined;
+      const { data, error } = await supabase.auth.signUp({ email, password: d.password.trim() });
+      if (error && /already registered|already exists/i.test(error.message)) {
+        // حساب أُنشئ سابقًا ولم يكتمل ربطه — ندخل به ونكمل الربط
+        const { data: si, error: siErr } = await supabase.auth.signInWithPassword({
+          email,
+          password: d.password.trim(),
+        });
+        if (siErr) throw new Error("يوجد حساب بهذا الرقم بالفعل. استخدم «دخول».");
+        userId = si.user?.id;
+      } else if (error) {
+        throw error;
+      } else {
+        userId = data.user?.id;
+      }
       if (!userId) throw new Error("تعذّر إنشاء الحساب");
 
-      const { error: pErr } = await supabase.from("profiles").insert({
-        id: userId,
-        role: "taxpayer" as Role,
-        full_name: d.fullName.trim(),
-        national_id: d.nationalId.trim(),
-        phone: d.phone.trim(),
-        tax_number: d.taxNumber.trim(),
-      });
+      const { error: pErr } = await supabase.from("profiles").upsert(
+        {
+          id: userId,
+          role: "taxpayer" as Role,
+          full_name: d.fullName.trim(),
+          national_id: d.nationalId.trim(),
+          phone: d.phone.trim(),
+        },
+        { onConflict: "id", ignoreDuplicates: true }
+      );
       if (pErr) throw pErr;
 
       const { data: matched, error: lErr } = await supabase.rpc("link_taxpayer", {
@@ -211,6 +215,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: newTaxpayerEmail(d.nationalId),
         password: d.password.trim(),
       });
+      if (error && /already registered|already exists/i.test(error.message)) {
+        throw new Error("يوجد حساب مسجّل بهذا الرقم القومي. استخدم «دخول» بالرقم القومي وكلمة المرور.");
+      }
       if (error) throw error;
       const userId = data.user?.id;
       if (!userId) throw new Error("تعذّر إنشاء الحساب");
@@ -225,16 +232,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       if (pErr) throw pErr;
 
-      // إنشاء سطر pending في جدول الممولين لتظهر للمأمور الحصر بالمأمورية
-      await supabase.from("taxpayers").insert({
-        name: d.fullName.trim(),
-        national_id: d.nationalId.trim(),
-        office_id: d.officeId,
-        user_id: userId,
-        source: "self_signup",
-        status: "طلب فتح ملف",
-        registered: false,
-      });
+      // إنشاء طلب فتح ملف معلّق يظهر لمأمور الحصر بالمأمورية المختارة
+      const { error: rErr } = await supabase.rpc("request_taxpayer_file", { p_office: d.officeId });
+      if (rErr) throw rErr;
 
       await loadProfile(userId);
     },
@@ -279,7 +279,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const signOut = useCallback(async () => {
+    if (session?.user?.id) await unregisterPush(session.user.id);
     await supabase.auth.signOut();
+    setProfile(null);
+  }, [session?.user?.id]);
+
+  const deleteAccount = useCallback(async () => {
+    const { error } = await supabase.rpc("delete_my_account");
+    if (error) throw error;
+    await supabase.auth.signOut({ scope: "local" });
     setProfile(null);
   }, []);
 
@@ -295,11 +303,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading,
         profileLoaded,
         signInEmployee,
-        signUpEmployee,
         signInTaxpayer,
         signUpExistingTaxpayer,
         signUpNewTaxpayer,
         signOut,
+        deleteAccount,
         refreshProfile,
         adminCreateEmployee,
       }}

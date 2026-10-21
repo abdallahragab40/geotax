@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useAuth } from "../../context/AuthContext";
 import { colors, radius, spacing, shadow } from "../../theme";
+import NotificationBell from "../../components/NotificationBell";
 
 export default function AdminHomeScreen() {
   const navigation = useNavigation<any>();
@@ -18,9 +19,12 @@ export default function AdminHomeScreen() {
           <Text style={styles.role}>الإدارة العليا</Text>
           <Text style={styles.name}>{profile?.full_name || "—"}</Text>
         </View>
-        <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
-          <Ionicons name="person-circle" size={40} color={colors.primary} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <TouchableOpacity onPress={() => navigation.navigate("Profile")}>
+            <Ionicons name="person-circle" size={40} color={colors.primary} />
+          </TouchableOpacity>
+          <NotificationBell />
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.grid}>

@@ -1,12 +1,13 @@
 // سجل الممولين والتعديلات (إدارة الحصر)
 import { supabase } from "../lib/supabase";
 import { Taxpayer, TaxpayerModification } from "../types";
+import { cleanSearch } from "../utils";
 
 export async function listRegistry(search?: string, source?: string): Promise<Taxpayer[]> {
   let q = supabase.from("taxpayers").select("*").order("created_at", { ascending: false });
   if (source) q = q.eq("source", source);
   if (search && search.trim()) {
-    const s = `%${search.trim()}%`;
+    const s = `%${cleanSearch(search)}%`;
     q = q.or(`tax_number.ilike.${s},name.ilike.${s},national_id.ilike.${s}`);
   }
   const { data, error } = await q;
@@ -46,11 +47,6 @@ export async function createTaxpayerFile(values: Record<string, any>): Promise<T
 
 export async function updateTaxpayerFile(id: number, values: Record<string, any>): Promise<void> {
   const { error } = await supabase.from("taxpayers").update(values).eq("id", id);
-  if (error) throw error;
-}
-
-export async function deleteTaxpayerFile(id: number): Promise<void> {
-  const { error } = await supabase.from("taxpayers").delete().eq("id", id);
   if (error) throw error;
 }
 

@@ -40,3 +40,12 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# بيانات حساسة (جداول الموظفين/الممولين) — لا تُرفع للمستودع
+*.xlsx
+*.xls
+*.csv
+
+# Firebase (يُرفع لـ EAS كمتغيّر ملف: GOOGLE_SERVICES_JSON)
+google-services.json
+GoogleService-Info.plist

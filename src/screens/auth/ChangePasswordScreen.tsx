@@ -16,8 +16,8 @@ export default function ChangePasswordScreen() {
   const [loading, setLoading] = useState(false);
 
   async function submit() {
-    if (pwd1.length < 6) {
-      Alert.alert("كلمة مرور قصيرة", "يجب ألا تقل عن 6 أحرف.");
+    if (pwd1.length < 8) {
+      Alert.alert("كلمة مرور قصيرة", "يجب ألا تقل عن 8 أحرف.");
       return;
     }
     if (pwd1 !== pwd2) {
@@ -40,9 +40,9 @@ export default function ChangePasswordScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.inner}>
-        <Ionicons name="key" size={48} color={colors.primary} />
+        <Ionicons name="key" size={48} color={colors.primary} style={{ alignSelf: "center" }} />
         <Text style={styles.title}>تغيير كلمة المرور</Text>
-        <Text style={styles.sub}>هذه أول مرة تدخل فيها. يجب تغيير كلمة المرور قبل المتابعة.</Text>
+        <Text style={styles.sub}>يجب تعيين كلمة مرور جديدة خاصة بك (8 أحرف على الأقل) قبل المتابعة.</Text>
 
         <TextInput
           style={styles.input}
