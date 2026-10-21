@@ -42,6 +42,7 @@ export default function SurveyorHomeScreen() {
         <Tile icon="briefcase" color="#0891B2" title="أعمال الحصر" onPress={() => navigation.navigate("SurveyorWorks")} />
         <Tile icon="map" color="#0E7C66" title="الخريطة التفاعلية" onPress={() => navigation.navigate("Map")} />
         <Tile icon="bar-chart" color="#0E7490" title="التقارير" onPress={() => navigation.navigate("Reports")} />
+        <Tile icon="alert-circle" color="#DB2777" title="الشكاوى" onPress={() => navigation.navigate("ComplaintsList")} />
         <Tile icon="chatbubbles" color="#0D9488" title="المراسلات" onPress={() => navigation.navigate("Conversations")} />
         <Tile icon="person" color="#D97706" title="الملف الشخصي" onPress={() => navigation.navigate("Profile")} />
       </ScrollView>

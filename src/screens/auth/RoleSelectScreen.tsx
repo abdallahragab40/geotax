@@ -1,6 +1,6 @@
 // شاشة اختيار نوع المستخدم: موظف أو ممول
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
@@ -12,56 +12,72 @@ type Props = NativeStackScreenProps<AuthStackParamList, "RoleSelect">;
 export default function RoleSelectScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Image source={require("../../../assets/icon.png")} style={styles.logo} />
-        <Text style={styles.title}>GeoTax</Text>
-        <Text style={styles.subtitle}>منظومة المعاينات والربط الجغرافي الضريبي</Text>
-      </View>
-
-      <TouchableOpacity
-        style={styles.card}
-        activeOpacity={0.85}
-        onPress={() => navigation.navigate("EmployeeLogin")}
-      >
-        <Ionicons name="shield-checkmark" size={32} color={colors.primary} />
-        <View style={styles.cardText}>
-          <Text style={styles.cardTitle}>موظف</Text>
-          <Text style={styles.cardDesc}>دخول برقم الحاسب وكلمة المرور</Text>
+      <ScrollView contentContainerStyle={styles.inner}>
+        <View style={styles.header}>
+          <Image source={require("../../../assets/icon.png")} style={styles.logo} />
+          <Text style={styles.title}>GeoTax</Text>
+          <Text style={styles.subtitle}>منظومة المعاينات والربط الجغرافي الضريبي</Text>
         </View>
-        <Ionicons name="chevron-back" size={22} color={colors.muted} />
-      </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.card}
-        activeOpacity={0.85}
-        onPress={() => navigation.navigate("TaxpayerLogin")}
-      >
-        <Ionicons name="person" size={32} color={colors.accent} />
-        <View style={styles.cardText}>
-          <Text style={styles.cardTitle}>ممول</Text>
-          <Text style={styles.cardDesc}>دخول برقم التسجيل الضريبي — ملفك وطلباتك</Text>
-        </View>
-        <Ionicons name="chevron-back" size={22} color={colors.muted} />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate("EmployeeLogin")}
+        >
+          <Ionicons name="shield-checkmark" size={32} color={colors.primary} />
+          <View style={styles.cardText}>
+            <Text style={styles.cardTitle}>موظف</Text>
+            <Text style={styles.cardDesc}>دخول برقم الحاسب وكلمة المرور</Text>
+          </View>
+          <Ionicons name="chevron-back" size={22} color={colors.muted} />
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.card}
-        activeOpacity={0.85}
-        onPress={() => navigation.navigate("Complaint")}
-      >
-        <Ionicons name="alert-circle" size={32} color="#DB2777" />
-        <View style={styles.cardText}>
-          <Text style={styles.cardTitle}>تقديم شكوى</Text>
-          <Text style={styles.cardDesc}>متاح للجمهور بدون تسجيل دخول</Text>
-        </View>
-        <Ionicons name="chevron-back" size={22} color={colors.muted} />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate("TaxpayerLogin")}
+        >
+          <Ionicons name="person" size={32} color={colors.accent} />
+          <View style={styles.cardText}>
+            <Text style={styles.cardTitle}>ممول</Text>
+            <Text style={styles.cardDesc}>دخول برقم التسجيل الضريبي — ملفك وطلباتك</Text>
+          </View>
+          <Ionicons name="chevron-back" size={22} color={colors.muted} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate("Complaint")}
+        >
+          <Ionicons name="alert-circle" size={32} color="#DB2777" />
+          <View style={styles.cardText}>
+            <Text style={styles.cardTitle}>تقديم شكوى</Text>
+            <Text style={styles.cardDesc}>متاح للجمهور بدون تسجيل دخول</Text>
+          </View>
+          <Ionicons name="chevron-back" size={22} color={colors.muted} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate("Track", { kind: "complaint" })}
+        >
+          <Ionicons name="search-circle" size={32} color="#7C3AED" />
+          <View style={styles.cardText}>
+            <Text style={styles.cardTitle}>متابعة شكوى</Text>
+            <Text style={styles.cardDesc}>برقم الشكوى ورقم الموبايل — بدون تسجيل دخول</Text>
+          </View>
+          <Ionicons name="chevron-back" size={22} color={colors.muted} />
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: spacing.xl, justifyContent: "center" },
+  container: { flex: 1, backgroundColor: colors.background },
+  inner: { flexGrow: 1, padding: spacing.xl, justifyContent: "center" },
   header: { alignItems: "center", marginBottom: spacing.xl * 1.5 },
   logo: {
     width: 84,

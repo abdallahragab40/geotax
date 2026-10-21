@@ -18,13 +18,15 @@ import {
   getTaxpayerFile,
   updateTaxpayerFile,
   listModifications,
+  setFileRequestStatus,
 } from "../../data/registry";
+import { StatusChips } from "../../components/Field";
 import { assignTaxNumber } from "../../data/notifications_api";
 import { headDeleteTaxpayer } from "../../data/news";
 import { useAuth } from "../../context/AuthContext";
 import { uploadPhotos } from "../../data/storage";
 import { openDirections } from "../../data/directions";
-import { Taxpayer, TaxpayerModification } from "../../types";
+import { Taxpayer, TaxpayerModification, FILE_REQUEST_STAFF_STATUS, FILE_REQUEST_COLORS } from "../../types";
 import { colors, radius, spacing, shadow } from "../../theme";
 import { formatDateTime, formatCoords } from "../../utils";
 import SecureImage from "../../components/SecureImage";
@@ -43,6 +45,8 @@ export default function TaxpayerFileScreen() {
   const [coords, setCoords] = useState<Coords | null>(null);
   const [taxInput, setTaxInput] = useState("");
   const [pendingPhotos, setPendingPhotos] = useState<string[]>([]);
+  const [reqStatus, setReqStatus] = useState("");
+  const [reqNote, setReqNote] = useState("");
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: "ملف الممول" });
@@ -51,6 +55,8 @@ export default function TaxpayerFileScreen() {
   const load = useCallback(async () => {
     const file = await getTaxpayerFile(id);
     setTp(file);
+    setReqStatus(file?.request_status ?? "");
+    setReqNote(file?.request_note ?? "");
     if (file?.latitude != null && file?.longitude != null) {
       setCoords({ lat: file.latitude, lng: file.longitude, acc: null });
     }
@@ -99,6 +105,20 @@ export default function TaxpayerFileScreen() {
       load();
     } catch (e: any) {
       Alert.alert("تعذّر الاعتماد", e?.message ?? "حاول مجددًا.");
+    }
+  }
+
+  async function saveRequestStatus() {
+    if (!FILE_REQUEST_STAFF_STATUS.includes(reqStatus)) {
+      Alert.alert("اختر الحالة", "اختر حالة الطلب أولًا.");
+      return;
+    }
+    try {
+      await setFileRequestStatus(id, reqStatus, reqNote);
+      Alert.alert("تم", "تم تحديث حالة الطلب وإبلاغ الممول.");
+      load();
+    } catch (e: any) {
+      Alert.alert("خطأ", e?.message ?? "تعذّر التحديث.");
     }
   }
 
@@ -151,6 +171,37 @@ export default function TaxpayerFileScreen() {
             <Ionicons name="navigate" size={18} color={colors.white} />
             <Text style={styles.dirText}>خط السير إلى موقع النشاط</Text>
           </TouchableOpacity>
+        )}
+
+        {/* طلب فتح ملف (تسجيل ذاتي): الحالة التي يتابعها الممول */}
+        {!!tp.request_code && (
+          <View style={styles.reqBox}>
+            <Text style={styles.reqTitle}>طلب فتح ملف رقم {tp.request_code}</Text>
+            <Text style={styles.reqDesc}>
+              الحالة الحالية: {tp.request_status || "تم الاستلام"}
+              {tp.request_updated_at ? ` — ${formatDateTime(tp.request_updated_at)}` : ""}
+            </Text>
+            {!tp.tax_number && (
+              <>
+                <StatusChips options={FILE_REQUEST_STAFF_STATUS} colorsMap={FILE_REQUEST_COLORS} value={reqStatus} onChange={setReqStatus} />
+                {(reqStatus === "مطلوب مستندات" || reqStatus === "مرفوض") && (
+                  <TextInput
+                    style={[styles.input, { minHeight: 70, textAlignVertical: "top" }]}
+                    placeholder={reqStatus === "مرفوض" ? "سبب الرفض (يظهر للممول)" : "المستندات المطلوبة (تظهر للممول)"}
+                    placeholderTextColor={colors.muted}
+                    value={reqNote}
+                    onChangeText={setReqNote}
+                    multiline
+                  />
+                )}
+                <TouchableOpacity style={styles.saveLoc} onPress={saveRequestStatus}>
+                  <Ionicons name="save-outline" size={16} color={colors.primary} />
+                  <Text style={styles.saveLocText}>حفظ حالة الطلب</Text>
+                </TouchableOpacity>
+                <Text style={styles.reqDesc}>عند إدخال الرقم الضريبي بالأسفل تصبح الحالة «تم فتح الملف» تلقائيًا.</Text>
+              </>
+            )}
+          </View>
         )}
 
         {/* المرحلة 2: استكمال التسجيل بالرقم الضريبي */}
@@ -256,6 +307,9 @@ const styles = StyleSheet.create({
   infoLabel: { flexDirection: "row-reverse", alignItems: "center", gap: spacing.xs },
   infoLabelText: { fontSize: 13, fontWeight: "700", color: colors.muted },
   infoValue: { fontSize: 16, color: colors.text, textAlign: "right", marginTop: 4 },
+  reqBox: { backgroundColor: "#EFF6FF", borderRadius: radius.lg, padding: spacing.lg, marginTop: spacing.md },
+  reqTitle: { fontSize: 15, fontWeight: "800", color: "#1E40AF", textAlign: "right" },
+  reqDesc: { fontSize: 13, color: "#1E40AF", textAlign: "right", marginTop: 2, marginBottom: spacing.sm },
   stage2: { backgroundColor: "#FEF3C7", borderRadius: radius.lg, padding: spacing.lg, marginTop: spacing.md },
   stage2Title: { fontSize: 15, fontWeight: "800", color: "#92400E", textAlign: "right" },
   stage2Desc: { fontSize: 13, color: "#92400E", textAlign: "right", marginTop: 2, marginBottom: spacing.sm },

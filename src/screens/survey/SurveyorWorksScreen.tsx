@@ -27,6 +27,12 @@ export default function SurveyorWorksScreen() {
           onPress={() => navigation.navigate("RequestsList", { department: "survey" })}
         />
         <Section
+          icon="key" color="#B45309"
+          title="تفعيل حسابات الممولين"
+          desc="ممولون لهم ملفات أنشأوا حسابات — تحقّق من الشخصية وأصدر رمز التفعيل"
+          onPress={() => navigation.navigate("AccountActivations")}
+        />
+        <Section
           icon="git-network" color="#D97706"
           title="المهام الواردة"
           desc="المهام المرسلة من مراجع الحصر مع خطوط السير"

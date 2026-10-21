@@ -5,6 +5,8 @@ export type AuthStackParamList = {
   EmployeeLogin: undefined;
   TaxpayerLogin: undefined;
   Complaint: undefined;
+  // متابعة بدون تسجيل دخول: شكوى أو طلب فتح ملف
+  Track: { kind: "complaint" | "file"; code?: string };
 };
 
 // مكدّس الموظفين الداخليين (المدير + المأمورون)
@@ -55,6 +57,7 @@ export type InternalStackParamList = {
   TaxpayerMyFile: undefined;
   AuditLog: undefined;
   PasswordResets: undefined;
+  AccountActivations: undefined;
   Map: undefined;
   Conversations: undefined;
   Chat: { otherId: string; name: string };

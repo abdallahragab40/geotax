@@ -132,7 +132,7 @@ export default function MapScreen({ navigation }: Props) {
         />
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.legend}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.legendBar} contentContainerStyle={styles.legend}>
         <Legend color={COL.active} label="نشط" />
         <Legend color={COL.partial_stop} label="توقف جزئي" />
         <Legend color={COL.final_stop} label="توقف نهائي" />
@@ -166,7 +166,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   searchBox: { flexDirection: "row-reverse", alignItems: "center", gap: spacing.sm, backgroundColor: colors.surface, margin: spacing.sm, paddingHorizontal: spacing.md, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border },
   searchInput: { flex: 1, height: 42, color: colors.text, textAlign: "right", fontSize: 14 },
-  legend: { flexDirection: "row-reverse", gap: spacing.sm, paddingHorizontal: spacing.sm, paddingBottom: spacing.xs },
+  // بدون flexGrow: 0 يتمدد شريط التمرير الأفقي على أندرويد ويشدّ الشارات رأسيًا
+  legendBar: { flexGrow: 0, flexShrink: 0 },
+  legend: { flexDirection: "row-reverse", alignItems: "center", gap: spacing.sm, paddingHorizontal: spacing.sm, paddingBottom: spacing.xs },
   legItem: { flexDirection: "row-reverse", alignItems: "center", gap: 4, backgroundColor: colors.surface, paddingHorizontal: spacing.sm, paddingVertical: 4, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.border },
   dot: { width: 10, height: 10, borderRadius: 5 },
   legLabel: { fontSize: 11, color: colors.text, fontWeight: "700" },

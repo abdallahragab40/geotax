@@ -6,6 +6,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import * as Clipboard from "expo-clipboard";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Field } from "../../components/Field";
 import LocationCard, { Coords } from "../../components/LocationCard";
@@ -34,6 +35,8 @@ export default function ComplaintFormScreen({ navigation }: Props) {
   const [coords, setCoords] = useState<Coords | null>(null);
   const [photos, setPhotos] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [submittedCode, setSubmittedCode] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   React.useEffect(() => {
     listOffices().then(setOffices).catch(() => {});
@@ -63,7 +66,7 @@ export default function ComplaintFormScreen({ navigation }: Props) {
     setSaving(true);
     try {
       const photoUrls = photos.length ? await uploadPhotos(photos) : [];
-      await createComplaint({
+      const code = await createComplaint({
         office_id: office.id,
         complainant_name: name.trim(),
         complainant_national_id: nationalId.trim(),
@@ -77,12 +80,49 @@ export default function ComplaintFormScreen({ navigation }: Props) {
         photos: photoUrls,
         status: "جديد",
       });
-      Alert.alert("تم استلام الشكوى", "شكرًا لك. تم تسجيل شكواك وسيتم مراجعتها.", [
-        { text: "حسنًا", onPress: () => navigation.goBack() },
-      ]);
+      setSubmittedCode(code);
     } catch (e: any) {
       Alert.alert("خطأ", e?.message ?? "حاول مجددًا.");
     } finally { setSaving(false); }
+  }
+
+  async function copyCode() {
+    if (!submittedCode) return;
+    await Clipboard.setStringAsync(submittedCode);
+    setCopied(true);
+  }
+
+  // شاشة التأكيد: رقم الشكوى + نسخ + متابعة
+  if (submittedCode) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.done}>
+          <Ionicons name="checkmark-circle" size={88} color={colors.primary} />
+          <Text style={styles.doneTitle}>تم استلام الشكوى</Text>
+          <Text style={styles.doneDesc}>
+            احتفظ برقم الشكوى. ستحتاجه مع رقم موبايلك لمتابعة شكواك ومعرفة الرد عليها.
+          </Text>
+          <View style={styles.codeBox}>
+            <Text style={styles.codeLabel}>رقم الشكوى</Text>
+            <Text selectable style={styles.codeText}>{submittedCode}</Text>
+          </View>
+          <TouchableOpacity style={styles.copyBtn} onPress={copyCode}>
+            <Ionicons name={copied ? "checkmark" : "copy-outline"} size={22} color={colors.primary} />
+            <Text style={styles.copyText}>{copied ? "تم النسخ" : "نسخ رقم الشكوى"}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.btn, styles.doneBtn, { backgroundColor: colors.primary }]}
+            onPress={() => navigation.replace("Track", { kind: "complaint", code: submittedCode })}
+          >
+            <Ionicons name="search" size={20} color={colors.white} />
+            <Text style={styles.btnText}>متابعة الشكوى</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.homeLink} onPress={() => navigation.popToTop()}>
+            <Text style={styles.homeLinkText}>العودة للرئيسية</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -176,4 +216,15 @@ const styles = StyleSheet.create({
   officeCode: { color: colors.primary, fontWeight: "700", fontSize: 13 },
   modalClose: { marginTop: spacing.md, alignItems: "center", paddingVertical: spacing.sm },
   modalCloseText: { color: colors.muted, fontWeight: "700" },
+  done: { flexGrow: 1, alignItems: "center", justifyContent: "center", padding: spacing.xl },
+  doneTitle: { fontSize: 24, fontWeight: "800", color: colors.text, marginTop: spacing.md },
+  doneDesc: { fontSize: 16, color: colors.muted, textAlign: "center", lineHeight: 26, marginTop: spacing.sm },
+  codeBox: { alignSelf: "stretch", alignItems: "center", backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 2, borderColor: colors.primary, borderStyle: "dashed", padding: spacing.lg, marginTop: spacing.xl, ...shadow },
+  codeLabel: { fontSize: 15, fontWeight: "700", color: colors.muted },
+  codeText: { fontSize: 32, fontWeight: "800", color: colors.primaryDark, marginTop: spacing.xs, letterSpacing: 2 },
+  copyBtn: { flexDirection: "row-reverse", alignItems: "center", justifyContent: "center", gap: spacing.sm, alignSelf: "stretch", height: 56, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.primary, backgroundColor: colors.surface, marginTop: spacing.lg },
+  copyText: { color: colors.primary, fontWeight: "800", fontSize: 17 },
+  doneBtn: { alignSelf: "stretch", marginHorizontal: 0, height: 58 },
+  homeLink: { paddingVertical: spacing.md },
+  homeLinkText: { color: colors.muted, fontWeight: "700", fontSize: 16 },
 });

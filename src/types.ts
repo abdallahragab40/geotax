@@ -47,6 +47,7 @@ export interface Office {
   governorate: string;
   region: string;
   status: string;
+  complaint_overdue_days?: number;  // أيام قبل ظهور الشكوى لرئيس المأمورية
 }
 
 // الدور المسؤول عن كل إدارة
@@ -254,6 +255,10 @@ export interface Taxpayer {
   office_id: number | null;
   activity_status: string; // active / partial_stop / final_stop
   created_at: string;
+  request_code: string | null;      // رقم طلب فتح الملف (التسجيل الذاتي)
+  request_status: string | null;
+  request_note: string;
+  request_updated_at: string | null;
 }
 
 // أقسام شاشة الممولين — "الكل" يضم كل المصادر
@@ -357,9 +362,79 @@ export interface Complaint {
   status: string;
   photos: string[];
   created_at: string;
+  office_id: number | null;
+  tracking_code: string | null;    // رقم الشكوى للمواطن
+  assigned_to: string | null;      // مأمور الحصر المختص
+  escalated: boolean;              // مصعّدة لرئيس المأمورية
+  escalated_at: string | null;
+  escalation_note: string;
+  official_reply: string;          // الرد الرسمي (يظهر للمواطن)
+  replied_at: string | null;
+  updated_at: string | null;
 }
 
-export const COMPLAINT_STATUS = ["جديد", "قيد المراجعة", "محوّل", "منتهي"];
+export const COMPLAINT_STATUS = ["جديد", "قيد المراجعة", "محوّل", "منتهي", "مرفوض"];
+export const COMPLAINT_CLOSED = ["محوّل", "منتهي", "مرفوض"];
+
+// أسماء الحالات كما تظهر للمواطن
+export const COMPLAINT_PUBLIC_STATUS: Record<string, string> = {
+  "جديد": "مستلمة",
+  "قيد المراجعة": "قيد المراجعة",
+  "محوّل": "تم التحويل",
+  "منتهي": "تم الحل",
+  "مرفوض": "مرفوضة",
+};
+
+// نتيجة متابعة الشكوى (بدون تسجيل دخول)
+export interface ComplaintTracking {
+  tracking_code: string;
+  status: string;
+  responsible: string;
+  office_name: string | null;
+  created_at: string;
+  updated_at: string;
+  official_reply: string;
+  replied_at: string | null;
+}
+
+// طلب فتح ملف (ممول بدون ملف)
+export const FILE_REQUEST_STATUS = ["تم الاستلام", "قيد المراجعة", "مطلوب مستندات", "تم فتح الملف", "مرفوض"];
+// الحالات التي يضبطها الموظف يدويًا («تم فتح الملف» تلقائيًا عند اعتماد الرقم الضريبي)
+export const FILE_REQUEST_STAFF_STATUS = ["قيد المراجعة", "مطلوب مستندات", "مرفوض"];
+export const FILE_REQUEST_COLORS: Record<string, string> = {
+  "تم الاستلام": "#2563EB",
+  "قيد المراجعة": "#D97706",
+  "مطلوب مستندات": "#7C3AED",
+  "تم فتح الملف": "#0E7C66",
+  "مرفوض": "#DC2626",
+};
+
+export interface FileRequestTracking {
+  request_code: string;
+  status: string;
+  note: string;
+  office_name: string | null;
+  tax_number: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// طلب تفعيل حساب ممول صاحب ملف
+export interface TaxpayerActivation {
+  id: number;
+  user_id: string | null;
+  taxpayer_id: number;
+  office_id: number | null;
+  tax_number: string;
+  full_name: string;
+  national_id: string;
+  phone: string;
+  status: string; // pending / verified / rejected
+  code_issued_at: string | null;
+  attempts: number;
+  created_at: string;
+  taxpayers?: { name: string; phone: string } | null;
+}
 
 export interface Message {
   id: number;

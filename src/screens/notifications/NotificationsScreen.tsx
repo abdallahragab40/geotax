@@ -22,6 +22,8 @@ const KIND_ICON: Record<string, string> = {
   file_approved: "checkmark-circle",
   file_rejected: "close-circle",
   password_reset: "key",
+  complaint: "alert-circle",
+  activation: "key",
   general: "information-circle",
 };
 const KIND_COLOR: Record<string, string> = {
@@ -33,6 +35,8 @@ const KIND_COLOR: Record<string, string> = {
   file_approved: "#0E7C66",
   file_rejected: "#DC2626",
   password_reset: "#B45309",
+  complaint: "#DB2777",
+  activation: "#B45309",
   general: "#64748B",
 };
 
@@ -44,6 +48,9 @@ function targetFor(n: Notification): [string, object | undefined] | null {
     case "request": return ["RequestDetail", { id: n.link_id }];
     case "password_reset": return ["PasswordResets", undefined];
     case "taxpayer": return ["TaxpayerMyFile", undefined];
+    case "complaint": return n.link_id ? ["ComplaintDetail", { id: n.link_id }] : ["ComplaintsList", undefined];
+    case "activation": return ["AccountActivations", undefined];
+    case "file_request": return ["TaxpayerHome", undefined];
     default: return null;
   }
 }

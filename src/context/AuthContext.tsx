@@ -144,7 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (e2) throw error;
   }, []);
 
-  // ممول مسجَّل مسبقًا بالنظام: ينشئ حسابه ويربطه بسجل taxpayers الموجود
+  // ممول له ملف بالنظام: ينشئ حسابه ويطلب تفعيله (الربط بعد إدخال رمز المأمورية)
   const signUpExistingTaxpayer = useCallback(
     async (d: { nationalId: string; phone: string; password: string; fullName: string; taxNumber: string }) => {
       // التحقق قبل إنشاء الحساب حتى لا يُحجز رقم الممول بحساب يتيم
@@ -155,7 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (cErr) throw cErr;
       if (!canRegister) {
         throw new Error(
-          "لا يوجد ملف بهذا الرقم الضريبي والرقم القومي، أو أن الملف مرتبط بحساب بالفعل. إن كنت ممولًا جديدًا استخدم «ملف جديد»."
+          "لا يوجد ملف بهذا الرقم الضريبي والرقم القومي، أو أن الملف مرتبط بحساب بالفعل. إن لم يكن لديك ملف استخدم «ليس لدي ملف (طلب فتح ملف)»."
         );
       }
 
@@ -189,7 +189,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
       if (pErr) throw pErr;
 
-      const { data: matched, error: lErr } = await supabase.rpc("link_taxpayer", {
+      // لا يُربط الحساب بالملف فورًا: يُنشأ طلب تفعيل، ويُدخل الممول رمزًا تصدره له المأمورية
+      // بعد التحقق من شخصيته (حتى لا يسجّل أحد على ملف غيره)
+      const { data: matched, error: lErr } = await supabase.rpc("request_account_activation", {
         p_tax: d.taxNumber.trim(),
         p_national: d.nationalId.trim(),
       });
@@ -200,7 +202,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!matched) {
         await supabase.auth.signOut();
         throw new Error(
-          "بياناتك غير موجودة في المأموريات. إن كنت ممولًا جديدًا استخدم «طلب فتح ملف جديد»."
+          "بياناتك غير موجودة في المأموريات. إن لم يكن لديك ملف استخدم «ليس لدي ملف (طلب فتح ملف)»."
         );
       }
       await loadProfile(userId);

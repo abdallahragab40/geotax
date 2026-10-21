@@ -39,6 +39,8 @@ import NewRequestFormScreen from "./src/screens/requests/NewRequestFormScreen";
 import ComplaintsListScreen from "./src/screens/complaints/ComplaintsListScreen";
 import ComplaintDetailScreen from "./src/screens/complaints/ComplaintDetailScreen";
 import ComplaintFormScreen from "./src/screens/complaints/ComplaintFormScreen";
+import TrackScreen from "./src/screens/public/TrackScreen";
+import AccountActivationsScreen from "./src/screens/survey/AccountActivationsScreen";
 import ReportsScreen from "./src/screens/reports/ReportsScreen";
 import NewsListScreen from "./src/screens/news/NewsListScreen";
 import NewsFormScreen from "./src/screens/news/NewsFormScreen";
@@ -94,6 +96,7 @@ function AuthNavigator() {
       <AuthStack.Screen name="EmployeeLogin" component={EmployeeLoginScreen} />
       <AuthStack.Screen name="TaxpayerLogin" component={TaxpayerLoginScreen} />
       <AuthStack.Screen name="Complaint" component={ComplaintFormScreen} />
+      <AuthStack.Screen name="Track" component={TrackScreen} />
     </AuthStack.Navigator>
   );
 }
@@ -144,6 +147,7 @@ function InternalNavigator() {
       <InternalStack.Screen name="TaxpayerMyFile" component={TaxpayerMyFileScreen} options={{ title: "ملف الممول" }} />
       <InternalStack.Screen name="AuditLog" component={AuditLogScreen} options={{ title: "سجل العمليات" }} />
       <InternalStack.Screen name="PasswordResets" component={PasswordResetsScreen} options={{ title: "استعادة كلمات المرور" }} />
+      <InternalStack.Screen name="AccountActivations" component={AccountActivationsScreen} options={{ title: "تفعيل حسابات الممولين" }} />
       <InternalStack.Screen name="Map" component={MapScreen} options={{ title: "الخريطة" }} />
       <InternalStack.Screen name="Conversations" component={ConversationsScreen} options={{ title: "المراسلات" }} />
       <InternalStack.Screen name="Chat" component={ChatScreen} options={{ title: "محادثة" }} />
